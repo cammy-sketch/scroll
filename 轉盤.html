@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>轉盤活動</title>
+    <style>
+        body {
+            background-color: #0d0d0d;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: "Microsoft JhengHei", sans-serif;
+            color: white;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #00f7ff;
+            text-shadow: 0 0 15px rgba(0, 247, 255, 0.7);
+        }
+
+        .container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin-top: 20px;
+        }
+
+        /* 轉盤外圈發光 */
+        .wheel-outer {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 8px solid #222;
+            box-shadow: 0 0 40px #00f7ff, inset 0 0 20px #00f7ff;
+            position: relative;
+            overflow: hidden;
+            transition: transform 4s cubic-bezier(0.15, 0, 0.2, 1);
+        }
+
+        /* 轉盤背景 */
+        .wheel-bg {
+            width: 100%;
+            height: 100%;
+            background: conic-gradient(
+                #1a1a1a 0deg 45deg, #050505 45deg 90deg,
+                #1a1a1a 90deg 135deg, #050505 135deg 180deg,
+                #1a1a1a 180deg 225deg, #050505 225deg 270deg,
+                #1a1a1a 270deg 315deg, #050505 315deg 360deg
+            );
+        }
+
+        /* 獎項文字佈局 */
+        .items {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0; left: 0;
+        }
+
+        .item {
+            position: absolute;
+            width: 80px;
+            height: 40px;
+            left: calc(50% - 40px);
+            top: 30px;
+            transform-origin: center 170px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .item span {
+            background: rgba(0, 247, 255, 0.1);
+            border: 1px solid #00f7ff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        /* 中央按鈕 */
+        .start-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(#00f7ff, #008c95);
+            border-radius: 50%;
+            border: 4px solid #fff;
+            color: #000;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 25px #00f7ff;
+            z-index: 10;
+            user-select: none;
+        }
+
+        .start-btn:active {
+            transform: translate(-50%, -50%) scale(0.9);
+        }
+
+        /* 指針 */
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 35px solid #ff0055;
+            z-index: 20;
+            filter: drop-shadow(0 0 8px #ff0055);
+        }
+
+        .info {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        #result-text {
+            color: #ff0055;
+            min-height: 1.5em;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>轉盤活動</h1>
+    <p>剩餘抽獎機會：<span id="chance" style="color: #00f7ff; font-weight: bold;">2</span> 次</p>
+
+    <div class="container">
+        <div class="pointer"></div>
+        <div id="wheel" class="wheel-outer">
+            <div class="wheel-bg"></div>
+            <div id="items-container" class="items"></div>
+        </div>
+        <div id="start-btn" class="start-btn">GO!</div>
+    </div>
+
+    <div class="info">
+        <h2 id="result-text">點擊 GO 開始抽獎！</h2>
+    </div>
+
+    <script>
+        const wheel = document.getElementById('wheel');
+        const startBtn = document.getElementById('start-btn');
+        const resultText = document.getElementById('result-text');
+        const chanceText = document.getElementById('chance');
+
+        // 你可以隨意修改這裡的獎項清單
+        const prizes = ["100 點數", "精美小禮", "下次再戰", "超級大獎", "50 點數", "虛寶序號", "驚喜禮包", "安慰獎"];
+        
+        let currentRotation = 0;
+        let isSpinning = false;
+        let chances = 2;
+
+        // 生成獎項
+        prizes.forEach((prize, index) => {
+            const item = document.createElement('div');
+            item.className = 'item';
+            item.style.transform = `rotate(${index * 45}deg)`;
+            item.innerHTML = `<span>${prize}</span>`;
+            document.getElementById('items-container').appendChild(item);
+        });
+
+        startBtn.addEventListener('click', () => {
+            if (isSpinning || chances <= 0) return;
+
+            isSpinning = true;
+            chances--;
+            chanceText.innerText = chances;
+            resultText.innerText = "好運降臨中...";
+
+            // 隨機旋轉：基礎 5 圈 (1800度) + 隨機角度
+            const randomDegree = Math.floor(Math.random() * 360);
+            const totalSpin = 1800 + randomDegree; 
+            currentRotation += totalSpin;
+
+            // 執行 CSS 動畫
+            wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+            // 動畫結束後的判定
+            setTimeout(() => {
+                isSpinning = false;
+                
+                // 計算停止後指針指向的區塊
+                const actualDegree = currentRotation % 360;
+                // 修正偏移量，讓判定對準指針位置
+                const prizeIndex = Math.floor(((360 - actualDegree + 22.5) % 360) / 45);
+                
+                resultText.innerText = `【 ${prizes[prizeIndex]} 】`;
+                
+                if (chances === 0) {
+                    startBtn.style.background = "#444";
+                    startBtn.style.boxShadow = "none";
+                    startBtn.innerText = "結束";
+                }
+            }, 4000);
+        });
+    </script>
+</body>
+</html>
